@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import ResidentAuthButton from "@/components/resident-auth-button";
 
 const features = [
   {
@@ -105,13 +106,7 @@ export default function Home() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Button
-              size="lg"
-              className="w-full cursor-pointer bg-white text-primary hover:bg-white/90 sm:w-auto"
-            >
-              <User className="mr-2 h-5 w-5" />
-              I am a Resident
-            </Button>
+            <ResidentAuthButton />
             <Button
               size="lg"
               variant="outline"
