@@ -7,25 +7,40 @@ import { UserProfile } from "@/types/user-profile";
 const RESIDENTS_COLLECTION = 'residents';
 const STAFF_COLLECTION = 'staff';
 
+function docToProfile(doc: FirebaseFirestore.DocumentSnapshot): UserProfile {
+  const data = doc.data()!;
+  return {
+    uid: doc.id,
+    fullName: data.fullName ?? null,
+    email: data.email ?? null,
+    role: data.role,
+    banned: data.banned ?? false,
+    createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
+    updatedAt: (data.updatedAt as Timestamp).toDate().toISOString(),
+  };
+}
+
 export async function createResident(userId: string, fullName: string, email: string) {
   const docRef = adminDb.collection(RESIDENTS_COLLECTION).doc(userId);
   await docRef.set({
     fullName,
     email,
     role: 'Resident',
+    banned: false,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
 }
 
-export async function signupStaff(fullName: string, email: string, password: string) {
+export async function createStaff(fullName: string, email: string, password: string, role: 'Admin' | 'Super Admin' | 'Tanod') {
   const userRecord = await adminAuth.createUser({ email, password });
   await adminAuth.setCustomUserClaims(userRecord.uid, { admin: true });
   const docRef = adminDb.collection(STAFF_COLLECTION).doc(userRecord.uid);
   await docRef.set({
     fullName,
     email,
-    role: 'Super Admin',
+    role,
+    banned: false,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -35,18 +50,50 @@ export async function getUserById(userId: string, isAdmin: boolean): Promise<Use
   const collection = isAdmin ? STAFF_COLLECTION : RESIDENTS_COLLECTION;
   const docRef = adminDb.collection(collection).doc(userId);
   const doc = await docRef.get();
+  if (!doc.exists) return null;
+  return docToProfile(doc);
+}
 
-  if (!doc.exists) {
-    return null;
-  }
+export async function getAllResidents(): Promise<UserProfile[]> {
+  const snapshot = await adminDb.collection(RESIDENTS_COLLECTION).orderBy('createdAt', 'desc').get();
+  return snapshot.docs.map(docToProfile);
+}
 
-  const data = doc.data()!;
-  return {
-    uid: doc.id,
-    fullName: data.fullName ?? null,
-    email: data.email ?? null,
-    role: data.role,
-    createdAt: (data.createdAt as Timestamp).toDate().toISOString(),
-    updatedAt: (data.updatedAt as Timestamp).toDate().toISOString(),
-  };
+export async function getAllStaff(): Promise<UserProfile[]> {
+  const snapshot = await adminDb.collection(STAFF_COLLECTION).orderBy('createdAt', 'desc').get();
+  return snapshot.docs.map(docToProfile);
+}
+
+export async function banResident(userId: string): Promise<void> {
+  await Promise.all([
+    adminDb.collection(RESIDENTS_COLLECTION).doc(userId).update({
+      banned: true,
+      updatedAt: FieldValue.serverTimestamp(),
+    }),
+    adminAuth.updateUser(userId, { disabled: true }),
+  ]);
+}
+
+export async function unbanResident(userId: string): Promise<void> {
+  await Promise.all([
+    adminDb.collection(RESIDENTS_COLLECTION).doc(userId).update({
+      banned: false,
+      updatedAt: FieldValue.serverTimestamp(),
+    }),
+    adminAuth.updateUser(userId, { disabled: false }),
+  ]);
+}
+
+export async function deleteResident(userId: string): Promise<void> {
+  await Promise.all([
+    adminDb.collection(RESIDENTS_COLLECTION).doc(userId).delete(),
+    adminAuth.deleteUser(userId),
+  ]);
+}
+
+export async function deleteStaff(userId: string): Promise<void> {
+  await Promise.all([
+    adminDb.collection(STAFF_COLLECTION).doc(userId).delete(),
+    adminAuth.deleteUser(userId),
+  ]);
 }

@@ -1,8 +1,8 @@
-export default function UserManagementPage() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold">User Management</h1>
-      <p className="mt-4 text-muted-foreground">Manage resident and staff accounts here.</p>
-    </div>
-  );
+import { getAllResidents, getAllStaff } from '@/services/user-service';
+import { UserManagementDashboard } from '@/components/user-management/user-management-dashboard';
+
+export default async function UserManagementPage() {
+  const [residents, staff] = await Promise.all([getAllResidents(), getAllStaff()]);
+
+  return <UserManagementDashboard initialResidents={residents} initialStaff={staff} />;
 }

@@ -2,8 +2,6 @@
 
 import { useState } from "react";
 import { LoginForm } from "./login-form";
-import { SignupForm } from "./signup-form";
-import { signupStaff } from "@/services/user-service";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "./ui/button";
 import {
@@ -18,15 +16,10 @@ import { UserCog } from "lucide-react";
 
 export default function StaffAuthButton() {
   const [open, setOpen] = useState(false);
-  const [isSignup, setIsSignup] = useState(false);
   const { loginStaff } = useAuth();
 
-  function handleOpenChange(value: boolean) {
-    setOpen(value);
-  }
-
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button
           size="lg"
@@ -39,43 +32,12 @@ export default function StaffAuthButton() {
       </DialogTrigger>
       <DialogContent className="sm:max-w-106.25">
         <DialogHeader>
-          <DialogTitle>{isSignup ? "Create a Staff Account" : "Welcome Back"}</DialogTitle>
+          <DialogTitle>Welcome Back</DialogTitle>
           <DialogDescription>
-            {isSignup
-              ? "Fill in the details below to create your staff account"
-              : "Enter your credentials to access your staff account"}
+            Enter your credentials to access your staff account
           </DialogDescription>
         </DialogHeader>
-        {isSignup ? (
-          <SignupForm onSubmit={signupStaff} onSuccess={() => handleOpenChange(false)} />
-        ) : (
-          <LoginForm onLogin={loginStaff} onSuccess={() => handleOpenChange(false)} />
-        )}
-        <p className="text-center text-sm text-muted-foreground">
-          {isSignup ? (
-            <>
-              Already have an account?{" "}
-              <button
-                type="button"
-                onClick={() => setIsSignup(false)}
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Sign in
-              </button>
-            </>
-          ) : (
-            <>
-              Don&apos;t have an account?{" "}
-              <button
-                type="button"
-                onClick={() => setIsSignup(true)}
-                className="font-medium text-primary underline-offset-4 hover:underline"
-              >
-                Create one
-              </button>
-            </>
-          )}
-        </p>
+        <LoginForm onLogin={loginStaff} onSuccess={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );

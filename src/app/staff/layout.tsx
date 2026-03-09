@@ -8,7 +8,7 @@ export default function StaffLayout({ children }: { children: React.ReactNode })
       <DashboardSidebar />
       <SidebarInset className="flex flex-1 flex-col overflow-y-auto">
         <DashboardHeader />
-        <main className="pt-16">
+        <main className="px-6 py-20 md:py-6">
           {children}
         </main>
       </SidebarInset>
